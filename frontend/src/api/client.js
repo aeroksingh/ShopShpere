@@ -3,15 +3,44 @@ import axios from "axios";
 const API_BASE_URL =
   process.env.REACT_APP_API_URL || "http://localhost:8080";
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
+const client = axios.create({
+  baseURL: `${API_BASE_URL}/api`,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Attach JWT automatically
-api.interceptors.request.use(
+// Extract the actual data from the backend response wrapper
+export function unwrap(response) {
+  return response.data.data;
+}
+
+// Extract a useful error message from backend/API errors
+export function extractErrorMessage(error) {
+  // Backend response:
+  // {
+  //   success: false,
+  //   message: "...",
+  //   data: ...
+  // }
+
+  if (error?.response?.data?.message) {
+    return error.response.data.message;
+  }
+
+  if (error?.response?.data?.error) {
+    return error.response.data.error;
+  }
+
+  if (error?.message) {
+    return error.message;
+  }
+
+  return "Something went wrong. Please try again.";
+}
+
+// Attach JWT automatically to every request
+client.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
 
@@ -25,7 +54,7 @@ api.interceptors.request.use(
 );
 
 // Handle unauthorized responses
-api.interceptors.response.use(
+client.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
@@ -37,4 +66,4 @@ api.interceptors.response.use(
   }
 );
 
-export default api;
+export default client;
