@@ -1,0 +1,51 @@
+spring:
+  application:
+    name: shopsphere
+
+  # ===== PostgreSQL =====
+  datasource:
+    url: jdbc:postgresql://localhost:5432/shopsphere_db
+    username: shopsphere_user
+    password: shopsphere_pass
+    driver-class-name: org.postgresql.Driver
+
+  # ===== JPA / Hibernate =====
+  jpa:
+    hibernate:
+      # 'update' = Hibernate adjusts schema to match your @Entity classes automatically.
+      # Fine for learning/dev. NEVER use 'update' or 'create' in production — use Flyway/Liquibase there.
+      ddl-auto: update
+    show-sql: true          # prints generated SQL to console - great for learning
+    properties:
+      hibernate:
+        format_sql: true    # pretty-prints that SQL
+    open-in-view: false     # IMPORTANT: disables the "Open Session In View" anti-pattern
+                            # (forces you to fetch what you need inside @Transactional service methods,
+                            # not lazily in the controller/view layer — better practice, avoids N+1 surprises)
+
+  # ===== Redis =====
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+server:
+  port: 8080
+
+# ===== JWT config (custom properties we'll read via @Value or @ConfigurationProperties) =====
+app:
+  jwt:
+    secret: "REPLACE_WITH_A_LONG_RANDOM_BASE64_SECRET_LATER"
+    expiration-ms: 86400000   # 24 hours
+
+# ===== springdoc / swagger =====
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+    com.shopsphere: debug

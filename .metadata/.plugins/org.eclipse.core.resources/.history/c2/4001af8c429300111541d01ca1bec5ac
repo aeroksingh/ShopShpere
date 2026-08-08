@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: shopsphere
+
+  # ===== PostgreSQL =====
+  datasource:
+    url: jdbc:postgresql://localhost:5432/shopsphere_db
+    username: shopsphere_user
+    password: shopsphere_pass
+    driver-class-name: org.postgresql.Driver
+
+  # ===== JPA / Hibernate =====
+  jpa:
+    hibernate:
+      # Fine for learning/dev. Use Flyway/Liquibase in production.
+      ddl-auto: update
+
+    show-sql: true
+
+    properties:
+      hibernate:
+        format_sql: true
+
+    # Disables Open Session in View
+    open-in-view: false
+
+  # ===== Redis =====
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+# ===== Server =====
+server:
+  port: 8080
+
+# ===== JWT config =====
+app:
+  jwt:
+    secret: "REPLACE_WITH_A_LONG_RANDOM_BASE64_SECRET"
+    expiration-ms: 86400000
+
+# ===== Swagger =====
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+# ===== Logging =====
+logging:
+  level:
+    org.hibernate.SQL: debug
+    com.shopsphere: debug

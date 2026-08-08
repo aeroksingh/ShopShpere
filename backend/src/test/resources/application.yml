@@ -1,0 +1,26 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:shopsphere_test;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop   # fresh schema for every test run -> tests never depend on leftover state
+    show-sql: false
+    database-platform: org.hibernate.dialect.H2Dialect
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  cache:
+    type: none   # disable Redis caching in tests -- no Redis container running during `mvn test`
+
+app:
+  jwt:
+    secret: dGVzdC1zZWNyZXQta2V5LWZvci11bml0LXRlc3RzLW9ubHktbmV2ZXItdXNlLWluLXByb2Q=
+    expiration-ms: 3600000
+    refresh-expiration-ms: 604800000

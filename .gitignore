@@ -1,0 +1,66 @@
+# ==========================================
+# ShopSphere Root Git Ignore
+# ==========================================
+
+# --------------------------
+# Backend
+# --------------------------
+
+backend/target/
+backend/.classpath
+backend/.project
+backend/.settings/
+
+backend/.idea/
+backend/*.iml
+
+backend/*.log
+backend/logs/
+
+# --------------------------
+# Frontend
+# --------------------------
+
+frontend/node_modules/
+frontend/build/
+frontend/dist/
+frontend/coverage/
+
+# --------------------------
+# Environment files
+# --------------------------
+
+.env
+.env.*
+!.env.example
+
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# --------------------------
+# IDE
+# --------------------------
+
+.idea/
+.vscode/
+
+# --------------------------
+# OS
+# --------------------------
+
+.DS_Store
+Thumbs.db
+
+# --------------------------
+# Temporary
+# --------------------------
+
+*.tmp
+*.temp
+*.swp
+*~

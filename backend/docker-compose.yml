@@ -1,0 +1,105 @@
+services:
+
+  # =========================
+  # Spring Boot Application
+  # =========================
+  app:
+    build: .
+    container_name: shopsphere-app
+    restart: unless-stopped
+
+    ports:
+      - "8080:8080"
+
+    environment:
+      # =========================
+      # PostgreSQL
+      # =========================
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/shopsphere_db
+      SPRING_DATASOURCE_USERNAME: shopsphere_user
+      SPRING_DATASOURCE_PASSWORD: shopsphere_pass
+
+      # =========================
+      # Redis
+      # =========================
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+
+      # =========================
+      # JWT
+      # Maps to:
+      # app.jwt.secret
+      # =========================
+      APP_JWT_SECRET: ${JWT_SECRET:-c2hvcHNwaGVyZS1zdXBlci1zZWNyZXQta2V5LWNoYW5nZS1pbi1wcm9kdWN0aW9uLTI1Ng==}
+
+      # 24 hours
+      APP_JWT_EXPIRATION_MS: 86400000
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+      redis:
+        condition: service_healthy
+
+
+  # =========================
+  # PostgreSQL
+  # =========================
+  postgres:
+    image: postgres:16-alpine
+    container_name: shopsphere-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: shopsphere_db
+      POSTGRES_USER: shopsphere_user
+      POSTGRES_PASSWORD: shopsphere_pass
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - shopsphere_pgdata:/var/lib/postgresql/data
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U shopsphere_user -d shopsphere_db"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+
+  # =========================
+  # Redis
+  # =========================
+  redis:
+    image: redis:7-alpine
+    container_name: shopsphere-redis
+    restart: unless-stopped
+
+    ports:
+      - "6379:6379"
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "redis-cli",
+          "ping"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+
+# =========================
+# Volumes
+# =========================
+volumes:
+  shopsphere_pgdata:

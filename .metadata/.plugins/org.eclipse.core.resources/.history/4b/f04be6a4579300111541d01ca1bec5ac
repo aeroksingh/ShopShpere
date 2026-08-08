@@ -1,0 +1,67 @@
+spring:
+  application:
+    name: shopsphere
+
+  # =========================
+  # PostgreSQL
+  # =========================
+  datasource:
+    url: jdbc:postgresql://localhost:5432/shopsphere_db
+    username: shopsphere_user
+    password: shopsphere_pass
+    driver-class-name: org.postgresql.Driver
+
+  # =========================
+  # JPA / Hibernate
+  # =========================
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
+  # =========================
+  # Redis
+  # =========================
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+
+# =========================
+# Server
+# =========================
+server:
+  port: 8080
+
+
+# =========================
+# JWT
+# =========================
+app:
+  jwt:
+    secret: 9c0e7a4c473cbd7f
+    expiration-ms: ${APP_JWT_EXPIRATION_MS:86400000}
+
+
+# =========================
+# Swagger
+# =========================
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+
+# =========================
+# Logging
+# =========================
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    com.shopsphere: DEBUG

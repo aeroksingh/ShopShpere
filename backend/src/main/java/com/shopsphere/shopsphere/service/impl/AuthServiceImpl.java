@@ -1,0 +1,91 @@
+package com.shopsphere.shopsphere.service.impl;
+
+import com.shopsphere.shopsphere.dto.auth.AuthResponse;
+import com.shopsphere.shopsphere.dto.auth.LoginRequest;
+import com.shopsphere.shopsphere.dto.auth.RegisterRequest;
+import com.shopsphere.shopsphere.entity.Role;
+import com.shopsphere.shopsphere.entity.User;
+import com.shopsphere.shopsphere.exception.DuplicateResourceException;
+import com.shopsphere.shopsphere.repository.UserRepository;
+import com.shopsphere.shopsphere.security.JwtService;
+import com.shopsphere.shopsphere.service.AuthService;
+
+import lombok.RequiredArgsConstructor;
+
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class AuthServiceImpl implements AuthService {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final AuthenticationManager authenticationManager;
+
+    @Override
+    public AuthResponse register(RegisterRequest request) {
+
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new DuplicateResourceException(
+                    "An account with this email already exists"
+            );
+        }
+
+        User user = User.builder()
+                .fullName(request.getFullName())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(Role.ROLE_CUSTOMER)
+                .enabled(true)
+                .build();
+
+        User saved = userRepository.save(user);
+
+        String accessToken = jwtService.generateAccessToken(saved);
+
+        return toAuthResponse(saved, accessToken);
+    }
+
+    @Override
+    public AuthResponse login(LoginRequest request) {
+
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getEmail(),
+                        request.getPassword()
+                )
+        );
+
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() ->
+                        new IllegalStateException(
+                                "User authenticated but not found"
+                        )
+                );
+
+        String accessToken = jwtService.generateAccessToken(user);
+
+        return toAuthResponse(user, accessToken);
+    }
+
+    private AuthResponse toAuthResponse(
+            User user,
+            String accessToken
+    ) {
+
+        return AuthResponse.builder()
+                .accessToken(accessToken)
+                .tokenType("Bearer")
+                .userId(user.getId())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .role(user.getRole().name())
+                .build();
+    }
+}

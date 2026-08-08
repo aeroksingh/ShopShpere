@@ -1,0 +1,5 @@
+package com.shopsphere.shopsphere.entity;
+
+public class PaymentStatus {
+
+}

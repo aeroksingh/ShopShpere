@@ -1,0 +1,86 @@
+package com.shopsphere.shopsphere.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
+
+/**
+ * We implement UserDetails directly on the entity. This is the simplest approach
+ * for Phase 1. In bigger systems people often wrap User in a separate
+ * UserPrincipal/UserDetails adapter class to keep persistence and security concerns
+ * separate — worth knowing as a "next step" refactor.
+ */
+@Entity
+@Table(name = "users", uniqueConstraints = {
+        @UniqueConstraint(columnNames = "email")
+})
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class User implements UserDetails {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, length = 100)
+    private String fullName;
+
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(nullable = false)
+    private String password; // stored as BCrypt hash, never plain text
+
+    @Enumerated(EnumType.STRING) // store "ROLE_CUSTOMER" not 0/1 — readable in DB
+    @Column(nullable = false)
+    private Role role;
+
+    @Builder.Default
+    private boolean enabled = true;
+
+    @Column(updatable = false)
+    private Instant createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = Instant.now();
+    }
+
+    // ---- UserDetails contract Spring Security needs ----
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority(role.name()));
+    }
+
+    @Override
+    public String getUsername() {
+        return email; // we log in with email, not a separate username field
+    }
+
+    @Override
+    public boolean isAccountNonExpired() { return true; }
+
+    @Override
+    public boolean isAccountNonLocked() { return true; }
+
+    @Override
+    public boolean isCredentialsNonExpired() { return true; }
+
+    @Override
+    public boolean isEnabled() { return enabled; }
+
+    @Override
+    public String getPassword() {
+        return password;
+    }
+}

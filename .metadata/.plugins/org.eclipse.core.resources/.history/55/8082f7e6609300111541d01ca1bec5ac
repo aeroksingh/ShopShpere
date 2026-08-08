@@ -1,0 +1,121 @@
+package com.shopsphere.shopsphere.service.impl;
+
+import com.shopsphere.shopsphere.dto.product.ProductRequest;
+import com.shopsphere.shopsphere.dto.product.ProductResponse;
+import com.shopsphere.shopsphere.entity.Category;
+import com.shopsphere.shopsphere.entity.Product;
+import com.shopsphere.shopsphere.exception.ResourceNotFoundException;
+import com.shopsphere.shopsphere.repository.CategoryRepository;
+import com.shopsphere.shopsphere.repository.ProductRepository;
+import com.shopsphere.shopsphere.service.ProductService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class ProductServiceImpl implements ProductService {
+
+    private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
+
+    @Override
+    @Transactional
+    @CacheEvict(value = "products", allEntries = true) // new product -> stale list/search caches, wipe them
+    public ProductResponse create(ProductRequest request) {
+        Category category = categoryRepository.findById(request.getCategoryId())
+                .orElseThrow(() -> ResourceNotFoundException.of("Category", request.getCategoryId()));
+
+        Product product = Product.builder()
+                .name(request.getName())
+                .description(request.getDescription())
+                .price(request.getPrice())
+                .stockQuantity(request.getStockQuantity())
+                .imageUrl(request.getImageUrl())
+                .category(category)
+                .build();
+
+        return toResponse(productRepository.save(product));
+    }
+
+    @Override
+    // Cache individual product lookups by id — this is the hot read path (product detail page)
+    @Cacheable(value = "product", key = "#id")
+    public ProductResponse getById(Long id) {
+        return toResponse(findEntity(id));
+    }
+
+    @Override
+    public Page<ProductResponse> getAll(Pageable pageable) {
+        return productRepository.findAll(pageable).map(this::toResponse);
+    }
+
+    @Override
+    public Page<ProductResponse> search(String keyword, Pageable pageable) {
+        return productRepository.findByNameContainingIgnoreCase(keyword, pageable).map(this::toResponse);
+    }
+
+    @Override
+    public Page<ProductResponse> getByCategory(Long categoryId, Pageable pageable) {
+        return productRepository.findByCategoryId(categoryId, pageable).map(this::toResponse);
+    }
+
+    @Override
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "product", key = "#id"),      // this product's own cached detail entry
+            @CacheEvict(value = "products", allEntries = true) // any list/search page might contain it -> wipe all
+    })
+    public ProductResponse update(Long id, ProductRequest request) {
+        Product product = findEntity(id);
+
+        if (!product.getCategory().getId().equals(request.getCategoryId())) {
+            Category category = categoryRepository.findById(request.getCategoryId())
+                    .orElseThrow(() -> ResourceNotFoundException.of("Category", request.getCategoryId()));
+            product.setCategory(category);
+        }
+
+        product.setName(request.getName());
+        product.setDescription(request.getDescription());
+        product.setPrice(request.getPrice());
+        product.setStockQuantity(request.getStockQuantity());
+
+        return toResponse(product);
+    }
+
+    @Override
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "product", key = "#id"),
+            @CacheEvict(value = "products", allEntries = true)
+    })
+    public void delete(Long id) {
+        Product product = findEntity(id);
+        productRepository.delete(product);
+    }
+
+    private Product findEntity(Long id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> ResourceNotFoundException.of("Product", id));
+    }
+
+    private ProductResponse toResponse(Product p) {
+        return ProductResponse.builder()
+                .id(p.getId())
+                .name(p.getName())
+                .description(p.getDescription())
+                .price(p.getPrice())
+                .stockQuantity(p.getStockQuantity())
+                .categoryId(p.getCategory().getId())
+                .categoryName(p.getCategory().getName())
+                .createdAt(p.getCreatedAt())
+                .updatedAt(p.getUpdatedAt())
+                .build();
+    }
+}
