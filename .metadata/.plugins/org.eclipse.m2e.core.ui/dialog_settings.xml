@@ -64,6 +64,7 @@
 	</section>
 	<section name="MavenProjectImportWizardPage">
 		<list key="rootDirectory">
+			<item value="D:\003_myprojects\e-commerce springboot\backend"/>
 			<item value="D:\003_myprojects\shopsphere"/>
 			<item value="D:\003_myprojects\shopsphere\src"/>
 			<item value="D:\003_myprojects\shopsphere\shopsphere"/>

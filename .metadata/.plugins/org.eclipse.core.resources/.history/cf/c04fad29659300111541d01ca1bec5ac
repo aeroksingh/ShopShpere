@@ -1,5 +1,0 @@
-package com.shopsphere.shopsphere.service.impl;
-
-public class PaymentServiceImpl {
-
-}
